@@ -1,25 +1,41 @@
 import logo from './logo.svg';
 import './App.css';
+import React, { useState } from 'react';
+import SearchBar from './components/SearchBar';
+import SearchResults from './components/SearchResults';
+import Tracklist from './components/Tracklist';
+import Track from './components/Track';
+import Playlist from './components/Playlist';
+
+const testData = [
+  { id: 1, name: 'song1', artist: 'artist1', album: 'album1' },
+  { id: 2, name: 'song2', artist: 'artist2', album: 'album2' }
+];
 
 function App() {
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState(testData);
+  const [playlist, setPlaylist] = useState([]);
+  // create 3 state hooks to set state in the above components
+  function searchBarUpdate(e) {
+    setSearchQuery(e.target.value);
+  };
+  function addTrackToPlaylist(track) {
+    setPlaylist(prevPlaylist => [...prevPlaylist, track]);
+  }
+  function removeTrackFromPlaylist(trackId) {
+    setPlaylist(prevPlaylist => prevPlaylist.filter(track => track.id !== trackId))
+  };
+  // updates searchQuery state with value from the target input field when an event is triggered
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+    <div>
+          <SearchBar onSearchBarUpdate={searchBarUpdate} />
+          {/* passes SearchBarUpdate function as a prop 'onSearchBarUpdate' to the SearchBar component */}
+          <SearchResults searchResults={searchResults} onAddTrack={addTrackToPlaylist}  />
+          <Playlist playlist={playlist} onRemoveTrack={removeTrackFromPlaylist} />
     </div>
-  );
+
+  )
 }
 
 export default App;

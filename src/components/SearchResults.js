@@ -2,9 +2,9 @@ import React from 'react';
 import './SearchResults.module.css';
 import Tracklist from './Tracklist';
 
-function SearchResults({ searchResults }) {
+function SearchResults({ searchResults, onAddTrack }) {
     return(
-        <Tracklist searchResults={searchResults} />
+        <Tracklist searchResults={searchResults} onAddTrack={onAddTrack} />
     )
 
 };
