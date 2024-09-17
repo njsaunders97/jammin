@@ -1,6 +1,6 @@
 import logo from './logo.svg';
 import './App.css';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import SearchBar from './components/SearchBar';
 import SearchResults from './components/SearchResults';
 import Tracklist from './components/Tracklist';
@@ -20,9 +20,15 @@ function App() {
   function searchBarUpdate(e) {
     setSearchQuery(e.target.value);
   };
+
+  useEffect(() => {
+    setSearchResults(testData.filter(data => data.name.includes(searchQuery) || data.artist.includes(searchQuery) || data.album.includes(searchQuery)))
+  }, [searchQuery]);
+
   function addTrackToPlaylist(track) {
     setPlaylist(prevPlaylist => [...prevPlaylist, track]);
   }
+
   function removeTrackFromPlaylist(trackId) {
     setPlaylist(prevPlaylist => prevPlaylist.filter(track => track.id !== trackId))
   };

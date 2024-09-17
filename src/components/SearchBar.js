@@ -6,7 +6,7 @@ function SearchBar({ onSearchBarUpdate }) {
         <form>
             <label htmlFor="searchQuery">Search</label>
             <input
-            name="name"
+            name="searchQuery"
             type="text"
             id="searchQuery"
             onChange={onSearchBarUpdate}

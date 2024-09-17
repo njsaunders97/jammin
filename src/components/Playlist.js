@@ -4,7 +4,11 @@ import Tracklist from './Tracklist';
 
 function Playlist({ playlist, onRemoveTrack }) {
     return(
-        <Tracklist playlist={playlist} onRemoveTrack={onRemoveTrack} />
+        <div>
+            <h2>Playlist</h2>
+            <Tracklist tracks={playlist} onRemoveTrack={onRemoveTrack} />
+        </div>
+
     )
 
 };
