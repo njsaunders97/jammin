@@ -6,8 +6,8 @@ function Track({ track, onAddTrack, onRemoveTrack }) {
     <div>
       <h3>{track.name}</h3>
       <p>{track.album}, {track.artist}</p>
-      {onAddTrack && <button onClick={() => onAddTrack(track)}>Add</button>}
-      {onRemoveTrack && <button onClick={() => onRemoveTrack(track.id)}>Remove</button>}
+      {onAddTrack && <button onClick={() => onAddTrack(track)}>+</button>}
+      {onRemoveTrack && <button onClick={() => onRemoveTrack(track.id)}>-</button>}
     </div>
   );
 }

@@ -16,6 +16,7 @@ function App() {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState(testData);
   const [playlist, setPlaylist] = useState([]);
+  const [playlistName, setPlaylistName] = useState('');
   // create 3 state hooks to set state in the above components
   function searchBarUpdate(e) {
     setSearchQuery(e.target.value);
@@ -26,19 +27,39 @@ function App() {
   }, [searchQuery]);
 
   function addTrackToPlaylist(track) {
-    setPlaylist(prevPlaylist => [...prevPlaylist, track]);
+    const isTrackInPlaylist = playlist.some(existingTrack => existingTrack.id === track.id);
+
+    if(!isTrackInPlaylist) {
+      setPlaylist(prevPlaylist => [...prevPlaylist, track]);
+    } else {
+      alert('This track is already in your playlist!');
+    }
   }
 
   function removeTrackFromPlaylist(trackId) {
     setPlaylist(prevPlaylist => prevPlaylist.filter(track => track.id !== trackId))
   };
+
+  function updatePlaylistName(e) {
+    setPlaylistName(e.target.value)
+  };
   // updates searchQuery state with value from the target input field when an event is triggered
   return (
     <div>
-          <SearchBar onSearchBarUpdate={searchBarUpdate} />
+          <SearchBar 
+          onSearchBarUpdate={searchBarUpdate} 
+          />
           {/* passes SearchBarUpdate function as a prop 'onSearchBarUpdate' to the SearchBar component */}
-          <SearchResults searchResults={searchResults} onAddTrack={addTrackToPlaylist}  />
-          <Playlist playlist={playlist} onRemoveTrack={removeTrackFromPlaylist} />
+          <SearchResults 
+          searchResults={searchResults} 
+          onAddTrack={addTrackToPlaylist}  
+          />
+          <Playlist 
+          playlist={playlist} 
+          onRemoveTrack={removeTrackFromPlaylist} 
+          playlistName={playlistName} 
+          onNameChange={updatePlaylistName} 
+          />
     </div>
 
   )
