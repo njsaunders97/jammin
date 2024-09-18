@@ -8,8 +8,8 @@ import Track from './components/Track';
 import Playlist from './components/Playlist';
 
 const testData = [
-  { id: 1, name: 'song1', artist: 'artist1', album: 'album1' },
-  { id: 2, name: 'song2', artist: 'artist2', album: 'album2' }
+  { id: 1, name: 'song1', artist: 'artist1', album: 'album1', uri: "spotify:album:2up3OPMp9Tb4dAKM2erWXQ" },
+  { id: 2, name: 'song2', artist: 'artist2', album: 'album2', uri: "spotify:album:2up3OPMp9Tb4dAKM2erWXF" }
 ];
 
 function App() {
@@ -44,6 +44,25 @@ function App() {
     setPlaylistName(e.target.value)
   };
   // updates searchQuery state with value from the target input field when an event is triggered
+
+  function extractPlaylistNameAndURI() {
+    return {
+      name: playlistName,
+      uris: playlist.map((track) => track.uri),
+    }
+  };
+
+  function resetPlaylist() {
+    setPlaylist([]);
+  }
+
+  function exportPlaylist() {
+    const playlist = extractPlaylistNameAndURI();
+    console.log("Exporting playlist:", playlist);
+    resetPlaylist();
+  }
+  
+
   return (
     <div>
           <SearchBar 
@@ -58,7 +77,8 @@ function App() {
           playlist={playlist} 
           onRemoveTrack={removeTrackFromPlaylist} 
           playlistName={playlistName} 
-          onNameChange={updatePlaylistName} 
+          onNameChange={updatePlaylistName}
+          exportPlaylist={exportPlaylist} 
           />
     </div>
 
