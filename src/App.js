@@ -1,11 +1,8 @@
-import logo from './logo.svg';
-import './App.css';
 import React, { useState, useEffect } from 'react';
+import './App.css';
+import Playlist from './components/Playlist';
 import SearchBar from './components/SearchBar';
 import SearchResults from './components/SearchResults';
-import Tracklist from './components/Tracklist';
-import Track from './components/Track';
-import Playlist from './components/Playlist';
 
 const testData = [
   { id: 1, name: 'song1', artist: 'artist1', album: 'album1', uri: "spotify:album:2up3OPMp9Tb4dAKM2erWXQ" },
