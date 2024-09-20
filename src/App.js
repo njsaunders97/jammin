@@ -20,6 +20,12 @@ function App() {
   };
 
   useEffect(() => {
+    let url = window.location.href();
+    let includesToken = url.includes()
+
+  })
+
+  useEffect(() => {
     setSearchResults(testData.filter(data => data.name.includes(searchQuery) || data.artist.includes(searchQuery) || data.album.includes(searchQuery)))
   }, [searchQuery]);
 
