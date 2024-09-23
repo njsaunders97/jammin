@@ -12,6 +12,17 @@ const testData = [
   { id: 2, name: 'song2', artist: 'artist2', album: 'album2', uri: "spotify:album:2up3OPMp9Tb4dAKM2erWXF" }
 ];
 
+const client_id = '84032ca547e9462cbe363e23212a67b5';
+const redirect_uri = 'http://localhost:3000/callback';
+const scope = 'playlist-read-private%20playlist-read-collaborative%20playlist-modify-private%20playlist-modify-public';
+
+let url = 'https://accounts.spotify.com/authorize';
+url += '?response_type=token';
+url += '&client_id=' + client_id;
+url += '&scope=' + scope;
+url += '&redirect_uri=' + redirect_uri;
+console.log(url);
+
 function App() {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState(testData);
@@ -27,38 +38,41 @@ function App() {
   useEffect(() => {
     let keyValuePairs = window.location.hash.substring(1).split('&');
     let accessTokenPair = keyValuePairs.find(pair => pair.startsWith('access_token'));
+    let tokenExpirationPair = keyValuePairs.find(pair => pair.startsWith('expires_in'));
+  
     if (accessTokenPair) {
       let extractedAccessToken = accessTokenPair.split('=')[1];
-      setAccessToken(extractedAccessToken);
-
-      let tokenExpirationPair = keyValuePairs.find(pair => pair.startsWith('expires_in'));
+      setAccessToken(extractedAccessToken); // This is async, so it won't reflect immediately
+  
       if (tokenExpirationPair) {
         let tokenExpiration = parseInt(tokenExpirationPair.split('=')[1]);
-        let currentTime = (Math.floor(Date.now() / 1000));
-        let expirationTimestamp = tokenExpiration + currentTime;
-        setExpirationTime(expirationTimestamp);
-        if (isTokenExpired(expirationTimestamp)) {
+        let currentTime = Math.floor(Date.now() / 1000);
+        let newExpirationTime = currentTime + tokenExpiration;
+        console.log('ExpirationTime: ' + newExpirationTime + 'currentTime: ' + currentTime);
+  
+        if (newExpirationTime < currentTime) {
           alert('Access token expired. Please login again.');
-          setAccessToken('');
+          setAccessToken(''); // Reset the token
         } else {
           console.log('Token is valid');
+          setExpirationTime(newExpirationTime); // Update state
         }
       }
     } else {
       alert('No access token found. Redirecting to login.');
-      
+      window.location.href = url; // Your auth URL
     }
     window.history.replaceState(null, document.title, window.location.pathname + window.location.search);
   }, []);
 
-  useEffect(() => {
-    setSearchResults(testData.filter(data => data.name.includes(searchQuery) || data.artist.includes(searchQuery) || data.album.includes(searchQuery)))
-  }, [searchQuery]);
-
-  function isTokenExpired(expirationTime) {
+  function isTokenExpired() {
     const currentTime = Math.floor(Date.now() / 1000);
     return currentTime > expirationTime;
   };
+
+  useEffect(() => {
+    setSearchResults(testData.filter(data => data.name.includes(searchQuery) || data.artist.includes(searchQuery) || data.album.includes(searchQuery)))
+  }, [searchQuery]);
 
   function handleSearchBarSubmit(e) {
     e.preventDefault();
