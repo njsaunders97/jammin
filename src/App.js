@@ -18,11 +18,8 @@ function App() {
   const [playlist, setPlaylist] = useState([]);
   const [playlistName, setPlaylistName] = useState('');
   const [accessToken, setAccessToken] = useState('');
-  const [expirationTime, setExpirationTime] = useState();
+  const [expirationTime, setExpirationTime] = useState(0); 
   // create 3 state hooks to set state in the above components
-  function searchBarUpdate(e) {
-    setSearchQuery(e.target.value);
-  };
 
   useEffect(() => {
     let keyValuePairs = window.location.hash.substring(1).split('&');
@@ -37,9 +34,12 @@ function App() {
         let currentTime = (Math.floor(Date.now() / 1000));
         let expirationTimestamp = tokenExpiration + currentTime;
         setExpirationTime(expirationTimestamp);
-        if (currentTime > expirationTimestamp) {
-          alert('Access token expired. You need to login again.');
-        };
+        if (isTokenExpired(expirationTimestamp)) {
+          alert('Access token expired. Please login again.');
+          setAccessToken('');
+        } else {
+          console.log('Token is valid');
+        }
       }
     } else {
       alert('No access token found.');
@@ -50,6 +50,62 @@ function App() {
   useEffect(() => {
     setSearchResults(testData.filter(data => data.name.includes(searchQuery) || data.artist.includes(searchQuery) || data.album.includes(searchQuery)))
   }, [searchQuery]);
+
+  function isTokenExpired(expirationTime) {
+    const currentTime = Math.floor(Date.now() / 1000);
+    return currentTime > expirationTime;
+  };
+
+  function handleSearchBarSubmit(e) {
+    e.preventDefault();
+    fetchSearchResults();
+  };
+
+  async function fetchSearchResults() {
+    if (!isTokenExpired(expirationTime)) {
+      try {
+        const response = await fetch(
+          'https://api.spotify.com/v1/search?type=track&q=' + searchQuery, 
+          {
+            headers: {
+              'Authorization': 'Bearer ' + accessToken, // Include access token in the header
+              'Content-Type': 'application/json'
+            }
+          }
+        );
+  
+        if (response.ok) {
+          const data = await response.json();
+          setSearchResults(data);
+          return data;
+        } else {
+          console.error('Error fetching search results:', response.statusText);
+          alert('Failed to fetch search results. Please try again.');
+        }
+      } catch (error) {
+        console.error('Network or fetch error:', error);
+        alert('An error occurred while fetching search results. Please try again later.');
+      }
+    } else {
+      alert('Your access token is expired. Please login again or refresh the token.');
+    }
+  };
+
+  async function extractJSONTrackData(response) {
+    const parsedJSON = await response.json();
+    const items = parsedJSON.tracks.items;
+    return items.map(track => ({
+      id: track.id,
+      name: track.name,
+      artist: track.artists[0].name,
+      album: track.album.name,
+      uri: track.uri
+    }));
+  };
+
+  function searchBarUpdate(e) {
+    setSearchQuery(e.target.value);
+  };
 
   function addTrackToPlaylist(track) {
     const isTrackInPlaylist = playlist.some(existingTrack => existingTrack.id === track.id);
@@ -91,7 +147,8 @@ function App() {
   return (
     <div>
           <SearchBar 
-          onSearchBarUpdate={searchBarUpdate} 
+          onSearchBarUpdate={searchBarUpdate}
+          onSearchBarSubmit={handleSearchBarSubmit} 
           />
           {/* passes SearchBarUpdate function as a prop 'onSearchBarUpdate' to the SearchBar component */}
           <SearchResults 
