@@ -17,7 +17,7 @@ function Playlist({ playlist, onRemoveTrack, playlistName, onNameChange, exportP
                 />
             </form>
             <Tracklist tracks={playlist} onRemoveTrack={onRemoveTrack} />
-            <button onClick={exportPlaylist}>Save this Playlist to Spotify</button>
+            <button onClick={exportPlaylist} >Save this Playlist to Spotify</button>
         </div>
 
     )
