@@ -24,51 +24,60 @@ url += '&redirect_uri=' + redirect_uri;
 console.log(url);
 
 function App() {
+
+  //defining state 
+
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState(testData);
   const [playlist, setPlaylist] = useState([]);
   const [playlistName, setPlaylistName] = useState('');
   const [accessToken, setAccessToken] = useState('');
-  const [expirationTime, setExpirationTime] = useState(0);
   const [username, setUsername] = useState('');
   const [userID, setUserID] = useState('');
   const [playlistID, setPlaylistID] = useState(''); 
-  // create 3 state hooks to set state in the above components
 
-  useEffect(() => {
+  //parsing and validating access tokens on-mount
+    useEffect(() => {
     let keyValuePairs = window.location.hash.substring(1).split('&');
     let accessTokenPair = keyValuePairs.find(pair => pair.startsWith('access_token'));
     let tokenExpirationPair = keyValuePairs.find(pair => pair.startsWith('expires_in'));
+    let tokenExpiration = parseInt(tokenExpirationPair.split('=')[1]);
+    const currentTime = Math.floor(Date.now() / 1000);
+    let expirationTimeStamp = localStorage.getItem('expirationTimeStamp');
+    let parsedExpirationTimeStamp = parseInt(expirationTimeStamp);
   
     if (accessTokenPair) {
       let extractedAccessToken = accessTokenPair.split('=')[1];
-      setAccessToken(extractedAccessToken); // This is async, so it won't reflect immediately
-  
-      if (tokenExpirationPair) {
-        let tokenExpiration = parseInt(tokenExpirationPair.split('=')[1]);
-        let currentTime = Math.floor(Date.now() / 1000);
-        let newExpirationTime = currentTime + tokenExpiration;
-        console.log('ExpirationTime: ' + newExpirationTime + 'currentTime: ' + currentTime);
-  
-        if (newExpirationTime < currentTime) {
-          alert('Access token expired. Please login again.');
-          setAccessToken(''); // Reset the token
-        } else {
-          console.log('Token is valid');
-          setExpirationTime(newExpirationTime); // Update state
-        }
-      }
+      setAccessToken(extractedAccessToken); 
     } else {
       alert('No access token found. Redirecting to login.');
-      window.location.href = url; // Your auth URL
+      window.location.href = url; 
+    };
+
+    if(!expirationTimeStamp) {
+      expirationTimeStamp = currentTime + tokenExpiration;
+      localStorage.setItem('expirationTimeStamp', expirationTimeStamp);
+    };
+
+    console.log(currentTime, parsedExpirationTimeStamp);
+
+    if (currentTime > parsedExpirationTimeStamp) {
+      alert('Your Spotify access token has expired. Redirecting to login again.');
+      setAccessToken('');
+      localStorage.removeItem('expirationTimeStamp');
+      window.location.href = url;
     }
-    window.history.replaceState(null, document.title, window.location.pathname + window.location.search);
+
   }, []);
 
+  /*
   function isTokenExpired() {
     const currentTime = Math.floor(Date.now() / 1000);
-    return currentTime > expirationTime;
+    if(currentTime > newExpirationTime) {
+      return true;
+    }
   };
+  */
 
   useEffect(() => {
     setSearchResults(testData.filter(data => data.name.includes(searchQuery) || data.artist.includes(searchQuery) || data.album.includes(searchQuery)))
@@ -80,7 +89,7 @@ function App() {
   };
 
   async function fetchSearchResults() {
-    if (!isTokenExpired(expirationTime)) {
+    /*if (!isTokenExpired()) { */
       try {
         const response = await fetch(
           'https://api.spotify.com/v1/search?type=track&q=' + searchQuery, 
@@ -104,9 +113,9 @@ function App() {
         console.error('Network or fetch error:', error);
         alert('An error occurred while fetching search results. Please try again later.');
       }
-    } else {
+    /*} else {
       alert('Your access token is expired. Please login again or refresh the token.');
-    }
+    }*/
   };
 
   async function extractJSONTrackData(response) {
