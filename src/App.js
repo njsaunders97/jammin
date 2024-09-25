@@ -4,14 +4,15 @@ import Playlist from './components/Playlist';
 import SearchBar from './components/SearchBar';
 import SearchResults from './components/SearchResults';
 
-// authorisation URL - https://accounts.spotify.com/authorize?client_id=84032ca547e9462cbe363e23212a67b5&response_type=token&redirect_uri=http://localhost:3000/callback&scope=playlist-read-private%20playlist-read-collaborative%20playlist-modify-private%20playlist-modify-public
-// example callback URL - http://localhost:3000/callback#access_token=YOUR_ACCESS_TOKEN&token_type=Bearer&expires_in=3600
-
+//sample data for test phase
 const testData = [
   { id: 1, name: 'song1', artist: 'artist1', album: 'album1', uri: "spotify:album:2up3OPMp9Tb4dAKM2erWXQ" },
   { id: 2, name: 'song2', artist: 'artist2', album: 'album2', uri: "spotify:album:2up3OPMp9Tb4dAKM2erWXF" }
 ];
 
+//defines auth url for Spotify API and redirect url for return to app
+// authorisation URL - https://accounts.spotify.com/authorize?client_id=84032ca547e9462cbe363e23212a67b5&response_type=token&redirect_uri=http://localhost:3000/callback&scope=playlist-read-private%20playlist-read-collaborative%20playlist-modify-private%20playlist-modify-public
+// example callback URL - http://localhost:3000/callback#access_token=YOUR_ACCESS_TOKEN&token_type=Bearer&expires_in=3600
 const client_id = '84032ca547e9462cbe363e23212a67b5';
 const redirect_uri = 'http://localhost:3000/callback';
 const scope = 'playlist-read-private%20playlist-read-collaborative%20playlist-modify-private%20playlist-modify-public';
@@ -23,12 +24,13 @@ url += '&scope=' + scope;
 url += '&redirect_uri=' + redirect_uri;
 console.log(url);
 
+//App component
+
 function App() {
 
   //defining state 
-
   const [searchQuery, setSearchQuery] = useState('');
-  const [searchResults, setSearchResults] = useState(testData);
+  const [searchResults, setSearchResults] = useState([]);
   const [playlist, setPlaylist] = useState([]);
   const [playlistName, setPlaylistName] = useState('');
   const [accessToken, setAccessToken] = useState('');
@@ -36,16 +38,25 @@ function App() {
   const [userID, setUserID] = useState('');
   const [playlistID, setPlaylistID] = useState(''); 
 
-  //parsing and validating access tokens on-mount
+  //declare expirationTimeStamp
+  let expirationTimeStamp = localStorage.getItem('expirationTimeStamp');
+  let parsedExpirationTimeStamp = parseInt(expirationTimeStamp);
+  let currentTime = Math.floor(Date.now() / 1000);
+
+  //parsing and validating access tokens upon mount 
     useEffect(() => {
     let keyValuePairs = window.location.hash.substring(1).split('&');
+    console.log(keyValuePairs);
     let accessTokenPair = keyValuePairs.find(pair => pair.startsWith('access_token'));
     let tokenExpirationPair = keyValuePairs.find(pair => pair.startsWith('expires_in'));
     let tokenExpiration = parseInt(tokenExpirationPair.split('=')[1]);
-    const currentTime = Math.floor(Date.now() / 1000);
-    let expirationTimeStamp = localStorage.getItem('expirationTimeStamp');
-    let parsedExpirationTimeStamp = parseInt(expirationTimeStamp);
   
+    if (!keyValuePairs) {
+      console.log(keyValuePairs);
+      console.log('No access token information found. Redirecting to login.');
+      window.location.href = url;
+    }
+
     if (accessTokenPair) {
       let extractedAccessToken = accessTokenPair.split('=')[1];
       setAccessToken(extractedAccessToken); 
@@ -54,73 +65,87 @@ function App() {
       window.location.href = url; 
     };
 
-    if(!expirationTimeStamp) {
+    if (!tokenExpirationPair) {
+      console.log(tokenExpirationPair);
+      alert('No token expiration information found. Redirecting to login.');
+      window.location.href = url;
+    }
+
+    if (!expirationTimeStamp) {
       expirationTimeStamp = currentTime + tokenExpiration;
       localStorage.setItem('expirationTimeStamp', expirationTimeStamp);
     };
 
-    console.log(currentTime, parsedExpirationTimeStamp);
-
     if (currentTime > parsedExpirationTimeStamp) {
-      alert('Your Spotify access token has expired. Redirecting to login again.');
+      alert('Your Spotify access token has expired. Logging in again.');
       setAccessToken('');
       localStorage.removeItem('expirationTimeStamp');
       window.location.href = url;
     }
-
   }, []);
 
-  /*
+  //define separate token expiration function for other asyncs - can't store expiration time in state
   function isTokenExpired() {
-    const currentTime = Math.floor(Date.now() / 1000);
-    if(currentTime > newExpirationTime) {
+    if(currentTime > parsedExpirationTimeStamp) {
       return true;
     }
   };
-  */
 
-  useEffect(() => {
+  //effect hook which sets searchResults to filter given data based on the searchQuery
+  /* useEffect(() => {
     setSearchResults(testData.filter(data => data.name.includes(searchQuery) || data.artist.includes(searchQuery) || data.album.includes(searchQuery)))
-  }, [searchQuery]);
+  }, [searchQuery]); */
 
-  function handleSearchBarSubmit(e) {
-    e.preventDefault();
-    fetchSearchResults();
-  };
-
+  //requests Spotify database for given searchQuery
   async function fetchSearchResults() {
-    /*if (!isTokenExpired()) { */
+    if (!isTokenExpired()) {
       try {
+        console.log('Search Query:', searchQuery); // Log search query
+        console.log('Access Token:', accessToken); // Log access token
+  
         const response = await fetch(
-          'https://api.spotify.com/v1/search?type=track&q=' + searchQuery, 
+          `https://api.spotify.com/v1/search?type=track&q=${searchQuery}`,
           {
             headers: {
-              'Authorization': 'Bearer ' + accessToken, // Include access token in the header
+              'Authorization': `Bearer ${accessToken}`,
               'Content-Type': 'application/json'
             }
           }
         );
   
+        console.log('Response Status:', response.status); // Log response status
+  
+        // Check if the response is ok before calling json()
         if (response.ok) {
-          const data = await response.json();
-          setSearchResults(data);
+          const data = await response.json(); // Read the response body here
+          console.log('Response Data:', data); // Log the response data
+  
+          const parsedData = extractJSONTrackData(data); // Pass the parsed data to the function
+          setSearchResults(parsedData); // Set the parsed data to searchResults
           return data;
         } else {
           console.error('Error fetching search results:', response.statusText);
-          alert('Failed to fetch search results. Please try again.');
+          alert('Failed to fetch search results. Please try again later.');
         }
       } catch (error) {
         console.error('Network or fetch error:', error);
         alert('An error occurred while fetching search results. Please try again later.');
       }
-    /*} else {
+    } else {
       alert('Your access token is expired. Please login again or refresh the token.');
-    }*/
+    }
+  }
+
+  // fetchSearchResults();
+
+  function handleSearchBarSubmit(e) {
+    e.preventDefault();
+    fetchSearchResults();
+    console.log('fetched');
   };
 
-  async function extractJSONTrackData(response) {
-    const parsedJSON = await response.json();
-    const items = parsedJSON.tracks.items;
+  async function extractJSONTrackData(data) {
+    const items = data.tracks.items;
     return items.map(track => ({
       id: track.id,
       name: track.name,
@@ -231,6 +256,13 @@ function App() {
     }
   }
 
+  async function exportPlaylist() {
+    const playlist = extractPlaylistNameAndURI();
+    await savePlaylist();
+    console.log("Exporting playlist:", playlist);
+    resetPlaylist();
+  }
+
   function searchBarUpdate(e) {
     setSearchQuery(e.target.value);
   };
@@ -263,13 +295,6 @@ function App() {
 
   function resetPlaylist() {
     setPlaylist([]);
-  }
-
-  async function exportPlaylist() {
-    const playlist = extractPlaylistNameAndURI();
-    await savePlaylist();
-    console.log("Exporting playlist:", playlist);
-    resetPlaylist();
   }
   
 

@@ -1,9 +1,9 @@
 import React from 'react';
 import './SearchBar.module.css';
 
-function SearchBar({ onSearchBarUpdate, handleSearchBarSubmit }) {
+function SearchBar({ onSearchBarUpdate, onSearchBarSubmit }) {
     return ( 
-        <form onSubmit={handleSearchBarSubmit}>
+        <form onSubmit={onSearchBarSubmit}>
             <label htmlFor="searchQuery">Search</label>
             <input
             name="searchQuery"
