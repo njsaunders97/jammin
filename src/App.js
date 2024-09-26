@@ -170,8 +170,11 @@ function App() {
 
       if (response.ok) {
         const userProfile = await response.json();
+        console.log(userProfile);
         setUsername(userProfile.display_name);
+        console.log(username);
         setUserID(userProfile.id);
+        console.log(userID);
         return userProfile;
       } else {
         console.error('Error fetching user profile: ' + response.statusText);
