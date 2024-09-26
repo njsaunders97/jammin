@@ -5,10 +5,10 @@ import SearchBar from './components/SearchBar';
 import SearchResults from './components/SearchResults';
 
 //sample data for test phase
-const testData = [
+/*const testData = [
   { id: 1, name: 'song1', artist: 'artist1', album: 'album1', uri: "spotify:album:2up3OPMp9Tb4dAKM2erWXQ" },
   { id: 2, name: 'song2', artist: 'artist2', album: 'album2', uri: "spotify:album:2up3OPMp9Tb4dAKM2erWXF" }
-];
+];*/
 
 //defines auth url for Spotify API and redirect url for return to app
 // authorisation URL - https://accounts.spotify.com/authorize?client_id=84032ca547e9462cbe363e23212a67b5&response_type=token&redirect_uri=http://localhost:3000/callback&scope=playlist-read-private%20playlist-read-collaborative%20playlist-modify-private%20playlist-modify-public
@@ -47,15 +47,16 @@ function App() {
     useEffect(() => {
     let keyValuePairs = window.location.hash.substring(1).split('&');
     console.log(keyValuePairs);
-    let accessTokenPair = keyValuePairs.find(pair => pair.startsWith('access_token'));
-    let tokenExpirationPair = keyValuePairs.find(pair => pair.startsWith('expires_in'));
-    let tokenExpiration = parseInt(tokenExpirationPair.split('=')[1]);
-  
+
     if (!keyValuePairs) {
       console.log(keyValuePairs);
       console.log('No access token information found. Redirecting to login.');
       window.location.href = url;
     }
+    
+    let accessTokenPair = keyValuePairs.find(pair => pair.startsWith('access_token'));
+    let tokenExpirationPair = keyValuePairs.find(pair => pair.startsWith('expires_in'));
+    let tokenExpiration = parseInt(tokenExpirationPair.split('=')[1]);
 
     if (accessTokenPair) {
       let extractedAccessToken = accessTokenPair.split('=')[1];
@@ -119,10 +120,9 @@ function App() {
         if (response.ok) {
           const data = await response.json(); // Read the response body here
           console.log('Response Data:', data); // Log the response data
-  
-          const parsedData = extractJSONTrackData(data); // Pass the parsed data to the function
-          setSearchResults(parsedData); // Set the parsed data to searchResults
-          return data;
+          const parsedData = await extractJSONTrackData(data); // Pass the parsed data to the function
+          const limitResults = parsedData.slice(0, 10);
+          setSearchResults(limitResults); // Set the parsed data to searchResults
         } else {
           console.error('Error fetching search results:', response.statusText);
           alert('Failed to fetch search results. Please try again later.');
@@ -185,6 +185,7 @@ function App() {
 
   async function createPlaylistInUserAccount() {
     try {
+      console.log('User ID: ' + userID, 'Access Token: ' + accessToken, 'Playlist Name: ' + playlistName);
       const response = await fetch(
         'https://api.spotify.com/v1/users/' + userID + '/playlists', 
         {
@@ -196,19 +197,24 @@ function App() {
           },
           body: JSON.stringify( 
           {
-            name: playlistName 
+            "name": playlistName 
           })
         }
       );
+
+      console.log('Response Status: ', response.status);
 
       if(response.ok) {
         const newPlaylist = await response.json();
         setPlaylistID(newPlaylist.id);
         return newPlaylist;
       } else {
+        const errorResponse = await response.json();
+        console.error('error creating: ', errorResponse);
         console.error('Error creating new playlist: ' + response.statusText);
         alert('There was an error creating your playlist. Please try again later.');
       }
+
     } catch (error) {
       console.error("Network or fetch error occurred", error);
       alert('An error occurred whilst creating your playlist. Please try again later.');
@@ -248,19 +254,22 @@ function App() {
   async function savePlaylist() {
     try {
       await fetchUserProfile();
-      await createPlaylistInUserAccount();
+      console.log(username, userID);
+      const exportedPlaylist = await exportPlaylist();
+      console.log('Exported Playlist: ', exportedPlaylist);
+      const newPlaylist = await createPlaylistInUserAccount();
+      console.log('Created Playlist ID: ', newPlaylist.id);
       await populatePlaylist();
+      resetPlaylist();
     } catch (error) {
       console.error("Error saving playlist: ", error);
       alert('There was an error saving your playlist to spotify. Please try again later.');
     }
-  }
+  };
 
   async function exportPlaylist() {
     const playlist = extractPlaylistNameAndURI();
-    await savePlaylist();
-    console.log("Exporting playlist:", playlist);
-    resetPlaylist();
+    return playlist;
   }
 
   function searchBarUpdate(e) {
@@ -314,7 +323,7 @@ function App() {
           onRemoveTrack={removeTrackFromPlaylist} 
           playlistName={playlistName} 
           onNameChange={updatePlaylistName}
-          exportPlaylist={exportPlaylist}
+          onSavePlaylist={savePlaylist}
           />
     </div>
 
