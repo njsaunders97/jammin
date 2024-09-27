@@ -2,7 +2,11 @@ import React from 'react';
 import './Playlist.module.css';
 import Tracklist from './Tracklist';
 
-function Playlist({ playlist, onRemoveTrack, playlistName, onNameChange, exportPlaylist }) {
+function Playlist({ playlist, onRemoveTrack, playlistName, onNameChange, onSavePlaylist}) {
+    const handleSaveClick = (e) => {
+        e.preventDefault();
+        onSavePlaylist();
+    }
     return(
         <div>
             <h2>Playlist</h2>
@@ -17,7 +21,7 @@ function Playlist({ playlist, onRemoveTrack, playlistName, onNameChange, exportP
                 />
             </form>
             <Tracklist tracks={playlist} onRemoveTrack={onRemoveTrack} />
-            <button onClick={exportPlaylist}>Save this Playlist to Spotify</button>
+            <button onClick={handleSaveClick}>Save this Playlist to Spotify</button>
         </div>
 
     )

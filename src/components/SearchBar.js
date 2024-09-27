@@ -1,16 +1,16 @@
 import React from 'react';
 import './SearchBar.module.css';
 
-function SearchBar({ onSearchBarUpdate }) {
+function SearchBar({ onSearchBarUpdate, onSearchBarSubmit }) {
     return ( 
-        <form>
-            <label htmlFor="searchQuery">Search</label>
+        <form autocomplete="off" onSubmit={onSearchBarSubmit}>
             <input
             name="searchQuery"
             type="text"
             id="searchQuery"
             onChange={onSearchBarUpdate}
             />
+            <button onClick={onSearchBarSubmit}>Search</button>
         </form>
     )
 };
