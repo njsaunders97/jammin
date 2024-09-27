@@ -34,9 +34,6 @@ function App() {
   const [playlist, setPlaylist] = useState([]);
   const [playlistName, setPlaylistName] = useState('');
   const [accessToken, setAccessToken] = useState('');
-  const [username, setUsername] = useState('');
-  const [userID, setUserID] = useState('');
-  const [playlistID, setPlaylistID] = useState(''); 
 
   //declare expirationTimeStamp
   let expirationTimeStamp = localStorage.getItem('expirationTimeStamp');
@@ -45,15 +42,17 @@ function App() {
 
   //parsing and validating access tokens upon mount 
     useEffect(() => {
+
+    if(window.location.hash) {
+      let keyValuePairs = window.location.hash.substring(1).split('&');
+      console.log(keyValuePairs);
+    } else {
+      window.location.href = url;
+    }
+
     let keyValuePairs = window.location.hash.substring(1).split('&');
     console.log(keyValuePairs);
 
-    if (!keyValuePairs) {
-      console.log(keyValuePairs);
-      console.log('No access token information found. Redirecting to login.');
-      window.location.href = url;
-    }
-    
     let accessTokenPair = keyValuePairs.find(pair => pair.startsWith('access_token'));
     let tokenExpirationPair = keyValuePairs.find(pair => pair.startsWith('expires_in'));
     let tokenExpiration = parseInt(tokenExpirationPair.split('=')[1]);
@@ -170,12 +169,7 @@ function App() {
 
       if (response.ok) {
         const userProfile = await response.json();
-        console.log(userProfile);
-        setUsername(userProfile.display_name);
-        console.log(username);
-        setUserID(userProfile.id);
-        console.log(userID);
-        return userProfile;
+        return userProfile.id;
       } else {
         console.error('Error fetching user profile: ' + response.statusText);
         alert('An error occurred whilst fetching your profile. Please try again later.');
@@ -186,11 +180,11 @@ function App() {
     }
   };
 
-  async function createPlaylistInUserAccount() {
+  async function createPlaylistInUserAccount(userID) {
     try {
       console.log('User ID: ' + userID, 'Access Token: ' + accessToken, 'Playlist Name: ' + playlistName);
       const response = await fetch(
-        'https://api.spotify.com/v1/users/' + userID + '/playlists', 
+        `https://api.spotify.com/v1/users/${userID}/playlists`, 
         {
           method: "POST",
           headers:
@@ -200,7 +194,7 @@ function App() {
           },
           body: JSON.stringify( 
           {
-            "name": playlistName 
+            name: playlistName
           })
         }
       );
@@ -209,7 +203,6 @@ function App() {
 
       if(response.ok) {
         const newPlaylist = await response.json();
-        setPlaylistID(newPlaylist.id);
         return newPlaylist;
       } else {
         const errorResponse = await response.json();
@@ -224,10 +217,10 @@ function App() {
     }
   };
 
-  async function populatePlaylist() {
+  async function populatePlaylist(playlistID) {
     try {
       const response = await fetch(
-        'https://api.spotify.com/v1/users/' + userID + '/playlists/' + playlistID + '/tracks',
+        `https://api.spotify.com/v1/playlists/${playlistID}/tracks`,
        {
         method: "POST",
         headers:
@@ -256,17 +249,22 @@ function App() {
 
   async function savePlaylist() {
     try {
-      await fetchUserProfile();
-      console.log(username, userID);
+      // Wait for the userID to be fetched
+      const userID = await fetchUserProfile();
+      console.log('User ID fetched:', userID);
+  
       const exportedPlaylist = await exportPlaylist();
-      console.log('Exported Playlist: ', exportedPlaylist);
-      const newPlaylist = await createPlaylistInUserAccount();
-      console.log('Created Playlist ID: ', newPlaylist.id);
-      await populatePlaylist();
-      resetPlaylist();
+      console.log('Exported Playlist:', exportedPlaylist);
+  
+      // Pass the userID directly into the playlist creation
+      const newPlaylist = await createPlaylistInUserAccount(userID);
+      console.log('Created Playlist ID:', newPlaylist.id);
+  
+      await populatePlaylist(newPlaylist.id); // Populate only after playlist creation
+      alert('Playlist saved!');
     } catch (error) {
-      console.error("Error saving playlist: ", error);
-      alert('There was an error saving your playlist to spotify. Please try again later.');
+      console.error("Error saving playlist:", error);
+      alert('There was an error saving your playlist to Spotify. Please try again later.');
     }
   };
 
