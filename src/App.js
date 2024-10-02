@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import './App.css';
+import styles from './App.module.css';
 import Playlist from './components/Playlist';
 import SearchBar from './components/SearchBar';
 import SearchResults from './components/SearchResults';
@@ -314,7 +314,7 @@ function App() {
   
 
   return (
-    <div>
+    <div className={styles.App}>
           <SearchBar 
           onSearchBarUpdate={searchBarUpdate}
           onSearchBarSubmit={handleSearchBarSubmit} 
