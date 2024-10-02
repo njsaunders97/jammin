@@ -10,7 +10,7 @@ function Playlist({ playlist, onRemoveTrack, playlistName, onNameChange, onSaveP
     return(
         <div>
             <h2>Playlist</h2>
-            <form>
+            <form autocomplete="off">
                 <label htmlFor="playlistName">Name your playlist:</label>
                 <input
                 name="playlistName"
