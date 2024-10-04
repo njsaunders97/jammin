@@ -1,0 +1,43 @@
+body {
+  text-align: center;
+  background-color: #343a40 !important;
+  font-family: "Roboto", sans-serif;
+}
+
+.navbar {
+  font-family: "Merriweather", serif;
+  margin-bottom: 1rem;
+}
+
+h3 { 
+  font-size: 1rem;
+}
+
+p {
+  font-size: 0.5rem;
+}
+
+.alert {
+  background-color: white;
+  color: black;
+  max-width: 300px;
+  margin: 0 auto;
+  max-height: 200px;
+  padding: 0.5rem 0.15rem;
+}
+
+.alert h3 {
+   font-size: 1rem;
+   margin-bottom: 0.25rem;
+}
+
+.alert p {
+  font-size: 0.8rem;
+  margin-top: 0.25rem;
+  margin-bottom: 0.4rem;
+}
+
+.alert .btn {
+  font-size: 1rem;
+  padding: 0.25rem 0.75rem;
+}

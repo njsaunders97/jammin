@@ -1,8 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import './App.css';
 import Playlist from './components/Playlist';
 import SearchBar from './components/SearchBar';
 import SearchResults from './components/SearchResults';
+import Alert from './components/Alert';
+import 'bootstrap/dist/css/bootstrap.min.css';
+import { Navbar, Container, Row, Col, Card, Button } from 'react-bootstrap';
+import './global.scss';
 
 //sample data for test phase
 /*const testData = [
@@ -34,6 +37,9 @@ function App() {
   const [playlist, setPlaylist] = useState([]);
   const [playlistName, setPlaylistName] = useState('');
   const [accessToken, setAccessToken] = useState('');
+  const [alertOpen, setAlertOpen] = useState(false);
+  const [alertMessage, setAlertMessage] = useState('');
+  const [alertTitle, setAlertTitle] = useState('');
 
   //declare expirationTimeStamp
   let expirationTimeStamp = localStorage.getItem('expirationTimeStamp');
@@ -61,13 +67,13 @@ function App() {
       let extractedAccessToken = accessTokenPair.split('=')[1];
       setAccessToken(extractedAccessToken); 
     } else {
-      alert('No access token found. Redirecting to login.');
+      showAlert('Whoops.', 'No access token found. Redirecting you to Spotify login.');
       window.location.href = url; 
     };
 
     if (!tokenExpirationPair) {
       console.log(tokenExpirationPair);
-      alert('No token expiration information found. Redirecting to login.');
+      showAlert('Whoops.', 'No token expiration information found. Redirecting to login.');
       window.location.href = url;
     }
 
@@ -77,10 +83,10 @@ function App() {
     };
 
     if (currentTime > parsedExpirationTimeStamp) {
-      alert('Your Spotify access token has expired. Logging in again.');
+      showAlert('Whoops.', 'Your Spotify access token has expired. Logging in again.');
+      window.location.href = url;
       setAccessToken('');
       localStorage.removeItem('expirationTimeStamp');
-      window.location.href = url;
     }
   }, []);
 
@@ -90,11 +96,6 @@ function App() {
       return true;
     }
   };
-
-  //effect hook which sets searchResults to filter given data based on the searchQuery
-  /* useEffect(() => {
-    setSearchResults(testData.filter(data => data.name.includes(searchQuery) || data.artist.includes(searchQuery) || data.album.includes(searchQuery)))
-  }, [searchQuery]); */
 
   //requests Spotify database for given searchQuery
   async function fetchSearchResults() {
@@ -124,18 +125,17 @@ function App() {
           setSearchResults(limitResults); // Set the parsed data to searchResults
         } else {
           console.error('Error fetching search results:', response.statusText);
-          alert('Failed to fetch search results. Please try again later.');
+          showAlert('Whoops.', 'Failed to fetch search results. Please try again later.');
         }
       } catch (error) {
         console.error('Network or fetch error:', error);
-        alert('An error occurred while fetching search results. Please try again later.');
+        showAlert('Whoops.', 'An error occurred while fetching search results. Please try again later.');
       }
     } else {
-      alert('Your access token is expired. Please login again or refresh the token.');
+      showAlert('Whoops.', 'Your access token is expired. Please login again.');
     }
   }
 
-  // fetchSearchResults();
 
   function handleSearchBarSubmit(e) {
     e.preventDefault();
@@ -172,11 +172,11 @@ function App() {
         return userProfile.id;
       } else {
         console.error('Error fetching user profile: ' + response.statusText);
-        alert('An error occurred whilst fetching your profile. Please try again later.');
+        showAlert('Whoops.', 'An error occurred whilst fetching your profile. Please try again later.');
       }
     } catch (error) {
       console.error('Network or fetch error', error);
-      alert('An error occurred whilst fetching your profile. Please try again later.');
+      showAlert('Whoops.', 'An error occurred whilst fetching your profile. Please try again later.');
     }
   };
 
@@ -208,12 +208,12 @@ function App() {
         const errorResponse = await response.json();
         console.error('error creating: ', errorResponse);
         console.error('Error creating new playlist: ' + response.statusText);
-        alert('There was an error creating your playlist. Please try again later.');
+        showAlert('Whoops.', 'There was an error creating your playlist. Please try again later.');
       }
 
     } catch (error) {
       console.error("Network or fetch error occurred", error);
-      alert('An error occurred whilst creating your playlist. Please try again later.');
+      showAlert('Whoops.', 'An error occurred whilst creating your playlist. Please try again later.');
     }
   };
 
@@ -238,12 +238,12 @@ function App() {
 
       if (!response.ok) {
         console.error('Error adding tracks to playlist: ' + response.statusText);
-        alert('There was an error adding your tracks to the playlist. Please try again later.');
+        showAlert('Whoops.', 'There was an error whilst adding tracks to your playlist. Please try again later.');
       }
 
     } catch (error) {
       console.error('Network or fetch error', error);
-      alert('There was an error whilst adding tracks to your playlist. Please try again later.');
+      showAlert('Whoops.', 'There was an error adding your tracks to the playlist. Please try again later.');
     }
   }
 
@@ -261,10 +261,13 @@ function App() {
       console.log('Created Playlist ID:', newPlaylist.id);
   
       await populatePlaylist(newPlaylist.id); // Populate only after playlist creation
-      alert('Playlist saved!');
+      showAlert('WOO!', 'Playlist saved to Spotify.');
     } catch (error) {
       console.error("Error saving playlist:", error);
-      alert('There was an error saving your playlist to Spotify. Please try again later.');
+      showAlert('Whoops.', 'There was an error saving your playlist to Spotify. Please try again later.');
+      if(!playlistName) {
+        showAlert('Stop right there!', 'Your shiny new playlist needs a name, Sport.');
+      }
     }
   };
 
@@ -283,7 +286,7 @@ function App() {
     if(!isTrackInPlaylist) {
       setPlaylist(prevPlaylist => [...prevPlaylist, track]);
     } else {
-      alert('This track is already in your playlist!');
+      showAlert('Hold up there, Turbo.', 'This track is already in your playlist!');
     }
   }
 
@@ -306,28 +309,52 @@ function App() {
   function resetPlaylist() {
     setPlaylist([]);
   }
+
+  function showAlert (title, message) {
+    setAlertTitle(title);
+    setAlertMessage(message);
+    setAlertOpen(true);
+  }
   
 
   return (
-    <div>
-          <SearchBar 
-          onSearchBarUpdate={searchBarUpdate}
-          onSearchBarSubmit={handleSearchBarSubmit} 
-          />
-          {/* passes SearchBarUpdate function as a prop 'onSearchBarUpdate' to the SearchBar component */}
-          <SearchResults 
-          searchResults={searchResults} 
-          onAddTrack={addTrackToPlaylist}  
-          />
-          <Playlist 
-          playlist={playlist} 
-          onRemoveTrack={removeTrackFromPlaylist} 
-          playlistName={playlistName} 
-          onNameChange={updatePlaylistName}
-          onSavePlaylist={savePlaylist}
-          />
-    </div>
-
+    <Container className="text-white center">
+      <Container className="mb-4">
+      <Navbar className="justify-content-center h1 mt-5">Jammin'</Navbar>
+      <h3 className="mb-4">Perform a function you can already do on Spotify!</h3>
+      <SearchBar
+      onSearchBarUpdate={searchBarUpdate}
+      onSearchBarSubmit={handleSearchBarSubmit} 
+      />
+      {
+        alertOpen && (
+            <Alert
+              title={alertTitle}
+              message={alertMessage}
+              onClose={() => setAlertOpen(false)}
+            />
+        )
+      }
+      </Container>
+          <Row>
+            <Col>
+              <SearchResults 
+              searchResults={searchResults} 
+              onAddTrack={addTrackToPlaylist}  
+              />
+            </Col>
+            <Col>
+              <Playlist 
+              playlist={playlist} 
+              onRemoveTrack={removeTrackFromPlaylist} 
+              playlistName={playlistName} 
+              onNameChange={updatePlaylistName}
+              onSavePlaylist={savePlaylist}
+              />
+            </Col>
+          </Row>
+          
+    </Container>
   )
 }
 
