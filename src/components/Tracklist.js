@@ -12,7 +12,7 @@ function Tracklist({ tracks, onRemoveTrack, onAddTrack }) {
             track={track} 
             onRemoveTrack={onRemoveTrack} 
             onAddTrack={onAddTrack} />
-            )) : <p>No tracks to display</p>}
+            )) : <h3>No tracks to display</h3>}
         </div>
     )
 }

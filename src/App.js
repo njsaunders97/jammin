@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import styles from './App.module.css';
 import Playlist from './components/Playlist';
 import SearchBar from './components/SearchBar';
 import SearchResults from './components/SearchResults';
 import Alert from './components/Alert';
+import 'bootstrap/dist/css/bootstrap.min.css';
+import { Navbar, Container, Row, Col, Card, Button } from 'react-bootstrap';
+import './global.scss';
 
 //sample data for test phase
 /*const testData = [
@@ -82,9 +84,9 @@ function App() {
 
     if (currentTime > parsedExpirationTimeStamp) {
       showAlert('Whoops.', 'Your Spotify access token has expired. Logging in again.');
+      window.location.href = url;
       setAccessToken('');
       localStorage.removeItem('expirationTimeStamp');
-      window.location.href = url;
     }
   }, []);
 
@@ -134,7 +136,6 @@ function App() {
     }
   }
 
-  // fetchSearchResults();
 
   function handleSearchBarSubmit(e) {
     e.preventDefault();
@@ -264,6 +265,9 @@ function App() {
     } catch (error) {
       console.error("Error saving playlist:", error);
       showAlert('Whoops.', 'There was an error saving your playlist to Spotify. Please try again later.');
+      if(!playlistName) {
+        showAlert('Stop right there!', 'Your shiny new playlist needs a name, Sport.');
+      }
     }
   };
 
@@ -314,34 +318,43 @@ function App() {
   
 
   return (
-    <div className={styles.App}>
-          <SearchBar 
-          onSearchBarUpdate={searchBarUpdate}
-          onSearchBarSubmit={handleSearchBarSubmit} 
-          />
-          {/* passes SearchBarUpdate function as a prop 'onSearchBarUpdate' to the SearchBar component */}
-          <SearchResults 
-          searchResults={searchResults} 
-          onAddTrack={addTrackToPlaylist}  
-          />
-          <Playlist 
-          playlist={playlist} 
-          onRemoveTrack={removeTrackFromPlaylist} 
-          playlistName={playlistName} 
-          onNameChange={updatePlaylistName}
-          onSavePlaylist={savePlaylist}
-          />
-          {
-            alertOpen && (
-              <Alert
-                title={alertTitle}
-                message={alertMessage}
-                onClose={() => setAlertOpen(false)}
+    <Container className="text-white center">
+      <Container className="mb-4">
+      <Navbar className="justify-content-center h1 mt-5">Jammin'</Navbar>
+      <h3 className="mb-4">Perform a function you can already do on Spotify!</h3>
+      <SearchBar
+      onSearchBarUpdate={searchBarUpdate}
+      onSearchBarSubmit={handleSearchBarSubmit} 
+      />
+      {
+        alertOpen && (
+            <Alert
+              title={alertTitle}
+              message={alertMessage}
+              onClose={() => setAlertOpen(false)}
+            />
+        )
+      }
+      </Container>
+          <Row>
+            <Col>
+              <SearchResults 
+              searchResults={searchResults} 
+              onAddTrack={addTrackToPlaylist}  
               />
-            )
-          }
-    </div>
-
+            </Col>
+            <Col>
+              <Playlist 
+              playlist={playlist} 
+              onRemoveTrack={removeTrackFromPlaylist} 
+              playlistName={playlistName} 
+              onNameChange={updatePlaylistName}
+              onSavePlaylist={savePlaylist}
+              />
+            </Col>
+          </Row>
+          
+    </Container>
   )
 }
 

@@ -1,15 +1,16 @@
 import React from 'react';
 import './Alert.module.css';
+import { Button, Col, Row, Container } from 'react-bootstrap';
 
 function Alert ({ title, message, onClose }) {
   return (
-    <div className="alert">
+    <Container className="alert mt-3 mb-0">
         <div className="alert-content">
             <h3>{title}</h3>
             <p>{message}</p>
-            <button onClick={onClose}>OK</button>
+            <Button onClick={onClose}>OK</Button>
         </div>
-    </div>
+    </Container>
   )
 }
 
